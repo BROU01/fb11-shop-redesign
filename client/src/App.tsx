@@ -1,42 +1,52 @@
-import { Toaster } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import NotFound from "@/pages/NotFound";
-import { Route, Switch } from "wouter";
-import ErrorBoundary from "./components/ErrorBoundary";
-import { ThemeProvider } from "./contexts/ThemeContext";
-import Home from "./pages/Home";
+/* Style Atelier Terre: quiet luxury éditorial, surfaces ivoire, vert forêt, matière cuir, navigation courte, aucun élément décoratif sans fonction. */
+import { useMemo, useState } from "react";
+import { Link, Route, Switch, useLocation, useRoute } from "wouter";
+import { ArrowUpRight, ChevronDown, Menu, Minus, Plus, Ruler, Search, ShoppingBag, X } from "lucide-react";
 
+const WA = "22871170097";
+const asset = {
+  hero: "/manus-storage/fb11-hero-editorial_21760c65.jpg",
+  mark: "/manus-storage/fb11-mark_8acb6281.png",
+  shoes: "/manus-storage/fb11-category-shoes_63f5c89b.jpg",
+  belts: "/manus-storage/fb11-category-belts_1f37fd56.jpg",
+  craft: "/manus-storage/fb11-craft-detail_33c97f50.jpg",
+};
 
-function Router() {
-  return (
-    <Switch>
-      <Route path={"/"} component={Home} />
-      <Route path={"/404"} component={NotFound} />
-      {/* Final fallback route */}
-      <Route component={NotFound} />
-    </Switch>
-  );
+type Product = { slug:string; name:string; category:string; price:number; description:string; sizes:string[]; image:string; tag?:string };
+const products: Product[] = [
+  { slug:"oxford-noir", name:"Oxford Noir Atelier", category:"Chaussures", price:45000, description:"Un richelieu en cuir lisse, dessiné pour les journées qui demandent de la présence.", sizes:["39","40","41","42","43","44"], image:asset.hero, tag:"Signature" },
+  { slug:"mocassin-havane", name:"Mocassin Havane", category:"Chaussures", price:38000, description:"Une ligne souple et une patine chaude pour un quotidien bien habillé.", sizes:["39","40","41","42","43"], image:"https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&fit=crop&w=1200&q=85" },
+  { slug:"ceinture-cognac", name:"Ceinture Cognac", category:"Ceintures", price:18000, description:"Cuir pleine fleur et boucle laiton mat. Une pièce qui se patine avec vous.", sizes:["95 cm","100 cm","105 cm","110 cm","115 cm"], image:"https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=1200&q=85", tag:"Essentiel" },
+  { slug:"ceinture-noire", name:"Ceinture Noir Profond", category:"Ceintures", price:18000, description:"Une finition nette, une boucle discrète, la ceinture de tous les jours.", sizes:["95 cm","100 cm","105 cm","110 cm"], image:"https://images.unsplash.com/photo-1624222247344-550fb60583dc?auto=format&fit=crop&w=1200&q=85" },
+];
+const money = (n:number) => new Intl.NumberFormat("fr-FR").format(n) + " FCFA";
+const waLink = (p?:Product, size?:string) => `https://wa.me/${WA}?text=${encodeURIComponent(p ? `Bonjour FB11 SHOP, je souhaite commander ${p.name}${size ? ` en taille ${size}` : ""}. Pouvez-vous me confirmer la disponibilité et la livraison ?` : "Bonjour FB11 SHOP, je souhaite découvrir votre sélection.")}`;
+
+function Logo(){ return <Link href="/" className="brand" aria-label="FB11 SHOP, accueil"><img src={asset.mark} alt=""/><span><b>FB11</b><small>SHOP / ATELIER</small></span></Link> }
+function Header(){
+  const [open,setOpen]=useState(false); const [loc]=useLocation();
+  const nav=[['Boutique','/boutique'],['À propos','/a-propos'],['Guide des tailles','/guide-tailles'],['Contact','/contact']];
+  return <>
+    <div className="topline">Livraison à Lomé & expédition au Togo <span>•</span> Commande simple sur WhatsApp</div>
+    <header className="site-header"><div className="header-inner"><Logo/><nav className={open?'nav-open':''}>{nav.map(([label,href])=><Link key={href} href={href} className={loc===href?'active':''} onClick={()=>setOpen(false)}>{label}</Link>)}<a className="nav-cta" href={waLink()}>Parler à la boutique <ArrowUpRight size={15}/></a></nav><button className="menu-btn" onClick={()=>setOpen(!open)} aria-label="Ouvrir le menu">{open?<X/>:<Menu/>}</button></div></header>
+  </>
 }
-
-// NOTE: About Theme
-// - First choose a default theme according to your design style (dark or light bg), than change color palette in index.css
-//   to keep consistent foreground/background color across components
-// - If you want to make theme switchable, pass `switchable` ThemeProvider and use `useTheme` hook
-
-function App() {
-  return (
-    <ErrorBoundary>
-      <ThemeProvider
-        defaultTheme="light"
-        // switchable
-      >
-        <TooltipProvider>
-          <Toaster />
-          <Router />
-        </TooltipProvider>
-      </ThemeProvider>
-    </ErrorBoundary>
-  );
-}
-
+function Footer(){ return <footer className="footer"><div className="footer-main"><div><Logo/><p className="footer-note">Des pièces choisies pour durer, à Lomé et au-delà.</p></div><div><p className="footer-label">La boutique</p><Link href="/boutique">Toutes les pièces</Link><Link href="/chaussures">Chaussures</Link><Link href="/ceintures">Ceintures</Link></div><div><p className="footer-label">Besoin d’aide ?</p><Link href="/guide-tailles">Guide des tailles</Link><Link href="/contact">Livraison & échanges</Link><a href={waLink()}>WhatsApp</a></div></div><div className="footer-bottom"><span>© 2026 FB11 SHOP — Lomé, Togo</span><span>Cuir sélectionné. Service attentif.</span></div></footer> }
+function Layout({children}:{children:React.ReactNode}){ return <><Header/><main>{children}</main><Footer/></> }
+function Eyebrow({children,number}:{children:React.ReactNode;number?:string}){ return <div className="eyebrow"><i>{number}</i>{children}</div> }
+function ButtonLink({href,children,secondary=false}:{href:string;children:React.ReactNode;secondary?:boolean}){ return <Link href={href} className={secondary?'button secondary':'button'}>{children}<ArrowUpRight size={16}/></Link> }
+function ProductCard({p}:{p:Product}){ return <Link href={`/produit/${p.slug}`} className="product-card"><div className="product-image"><img src={p.image} alt={p.name}/>{p.tag&&<span className="product-tag">{p.tag}</span>}<span className="view-product">Voir la pièce <ArrowUpRight size={15}/></span></div><div className="product-meta"><div><p>{p.category}</p><h3>{p.name}</h3></div><strong>{money(p.price)}</strong></div></Link> }
+function Home(){ return <>
+  <section className="hero"><div className="hero-copy"><Eyebrow number="01">La sélection FB11</Eyebrow><h1>Le cuir se remarque <em>avant</em> même qu’on le touche.</h1><p className="hero-lead">Chaussures et ceintures choisies avec attention, pour celles et ceux qui aiment les belles lignes et les matières qui vivent.</p><div className="hero-actions"><ButtonLink href="/boutique">Découvrir la boutique</ButtonLink><a className="text-link" href={waLink()}>Commander sur WhatsApp <ArrowUpRight size={16}/></a></div><div className="hero-foot"><span><b>01</b> Matières choisies</span><span><b>02</b> Livraison à Lomé</span><span><b>03</b> Échange de pointure</span></div></div><div className="hero-visual"><img src={asset.hero} alt="Chaussures et ceinture en cuir sur une pierre claire"/><div className="hero-caption"><span>La matière au centre</span><b>FB11 / 01</b></div></div></section>
+  <section className="intro container"><div><Eyebrow number="02">Notre manière de choisir</Eyebrow><h2>Moins de pièces.<br/><em>Plus de caractère.</em></h2></div><div className="intro-text"><p>FB11 SHOP est une boutique de proximité pour les essentiels bien dessinés : une paire qui tombe juste, une ceinture qui finit une silhouette.</p><ButtonLink href="/a-propos" secondary>Découvrir l’atelier</ButtonLink></div></section>
+  <section className="feature-section"><div className="container"><div className="section-head"><div><Eyebrow number="03">La sélection du moment</Eyebrow><h2>Les pièces qui restent.</h2></div><ButtonLink href="/boutique" secondary>Voir toute la boutique</ButtonLink></div><div className="product-grid">{products.slice(0,3).map(p=><ProductCard key={p.slug} p={p}/>)}</div></div></section>
+  <section className="split-story container"><div className="story-image"><img src="https://images.unsplash.com/photo-1612817288484-6f916006741a?auto=format&fit=crop&w=1400&q=85" alt="Détail de cuir et de couture sur un soulier"/></div><div className="story-copy"><Eyebrow number="04">Le geste derrière la pièce</Eyebrow><h2>Une belle matière n’a pas besoin d’en faire trop.</h2><p>Nous préférons les cuirs qui se patinent, les formes qui restent élégantes et le conseil qui prend le temps. Pas de catalogue infini : seulement une sélection lisible.</p><ButtonLink href="/contact">Parler à la boutique</ButtonLink></div></section>
+  <section className="home-cta"><div className="container cta-inner"><div><Eyebrow number="05">Besoin d’un conseil ?</Eyebrow><h2>Votre prochaine paire commence par une conversation.</h2></div><a className="button light" href={waLink()}>Écrire sur WhatsApp <ArrowUpRight size={16}/></a></div></section>
+</> }
+function Shop({category}:{category?:string}){ const [query,setQuery]=useState(""); const filtered=products.filter(p=>(!category||p.category===category)&&p.name.toLowerCase().includes(query.toLowerCase())); return <section className="page-section container shop-page"><div className="page-intro"><Eyebrow number="01">{category||"La boutique"}</Eyebrow><h1>{category?`La sélection ${category.toLowerCase()}.`:'Choisir une pièce qui vous ressemble.'}</h1><p>Une sélection courte, photographiée simplement, avec les tailles disponibles et une commande directe.</p></div><div className="shop-toolbar"><label><Search size={17}/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Rechercher une pièce"/></label><span>{filtered.length} pièce{filtered.length>1?'s':''}</span></div><div className="product-grid large">{filtered.map(p=><ProductCard key={p.slug} p={p}/>)}</div></section> }
+function ProductPage({slug}:{slug:string}){ const p=products.find(x=>x.slug===slug)||products[0]; const [size,setSize]=useState(p.sizes[0]); const [qty,setQty]=useState(1); return <section className="product-page container"><Link href="/boutique" className="back-link">← Retour à la boutique</Link><div className="product-detail"><div className="detail-image"><img src={p.image} alt={p.name}/></div><div className="detail-copy"><Eyebrow number="01">{p.category} / FB11</Eyebrow><h1>{p.name}</h1><p className="detail-price">{money(p.price)}</p><p className="detail-description">{p.description}</p><div className="detail-rule"/><div className="choice"><div className="choice-head"><span>Choisir la taille</span><Link href="/guide-tailles">Guide des tailles</Link></div><div className="size-list">{p.sizes.map(s=><button className={size===s?'selected':''} key={s} onClick={()=>setSize(s)}>{s}</button>)}</div></div><div className="choice"><div className="choice-head"><span>Quantité</span></div><div className="quantity"><button onClick={()=>setQty(Math.max(1,qty-1))}><Minus size={15}/></button><span>{qty}</span><button onClick={()=>setQty(qty+1)}><Plus size={15}/></button></div></div><a className="button full" href={waLink(p,size)}>Commander cette pièce <ArrowUpRight size={16}/></a><p className="delivery-note">Réponse rapide sur WhatsApp · Livraison à Lomé · Échange de pointure sous 48 h</p></div></div></section> }
+function Sizes(){ return <section className="page-section container info-page"><div className="page-intro narrow"><Eyebrow number="01">Le bon choix, simplement</Eyebrow><h1>Guide des tailles</h1><p>Une mesure rapide vaut mieux qu’une approximation. Si vous hésitez, envoyez-nous votre mesure sur WhatsApp.</p></div><div className="size-columns"><div className="size-card"><Ruler size={25}/><h2>Chaussures</h2><p>Mesurez votre pied en fin de journée, talon contre un mur. Comparez ensuite avec votre pointure habituelle.</p><div className="size-table">{[['39','25,0 cm'],['40','25,7 cm'],['41','26,3 cm'],['42','27,0 cm'],['43','27,7 cm'],['44','28,3 cm']].map(r=><div key={r[0]}><b>{r[0]}</b><span>{r[1]}</span></div>)}</div></div><div className="size-card"><Ruler size={25}/><h2>Ceintures</h2><p>Mesurez autour de la taille, à l’endroit où vous portez la ceinture. Nous conseillons la taille la plus proche.</p><div className="size-table">{[['95 cm','90–95 cm'],['100 cm','95–100 cm'],['105 cm','100–105 cm'],['110 cm','105–110 cm'],['115 cm','110–115 cm']].map(r=><div key={r[0]}><b>{r[0]}</b><span>{r[1]}</span></div>)}</div></div></div><div className="help-strip"><span>Une hésitation ?</span><a href={waLink()}>Envoyer ma mesure sur WhatsApp <ArrowUpRight size={15}/></a></div></section> }
+function About(){ return <section className="page-section container about-page"><div className="about-hero"><div><Eyebrow number="01">À propos de FB11</Eyebrow><h1>Le goût des choses qui durent.</h1><p>À Lomé, FB11 SHOP propose une sélection de chaussures et d’accessoires en cuir pour le quotidien, le travail et les occasions qui comptent.</p></div><img src="https://images.unsplash.com/photo-1624222247344-550fb60583dc?auto=format&fit=crop&w=1400&q=85" alt="Ceinture en cuir cognac"/></div><div className="about-grid"><div><Eyebrow number="02">Notre promesse</Eyebrow><h2>Conseiller avant de vendre.</h2></div><div><p>Une photo ne remplace pas toujours un conseil. C’est pourquoi chaque commande peut commencer par une question de pointure, de matière ou de style sur WhatsApp.</p><p>Nous privilégions une relation simple : des informations claires, une livraison annoncée et un échange possible si la pointure n’est pas la bonne.</p></div></div></section> }
+function Contact(){ return <section className="page-section container contact-page"><div className="page-intro narrow"><Eyebrow number="01">La boutique</Eyebrow><h1>Parlons de votre prochaine pièce.</h1><p>Une question sur une taille, une livraison ou un modèle ? Écrivez-nous, nous vous répondons directement.</p></div><div className="contact-grid"><div className="contact-card"><p className="footer-label">WhatsApp</p><h2>La réponse la plus rapide.</h2><a className="button" href={waLink()}>Écrire à FB11 <ArrowUpRight size={16}/></a></div><div className="contact-details"><div><span>Showroom</span><b>Lomé, Togo</b><p>Livraison rapide à Lomé et expédition au Togo.</p></div><div><span>Horaires</span><b>Lun — Sam · 08:30 — 18:30</b><p>Réponse WhatsApp pendant les heures d’ouverture.</p></div></div></div></section> }
+function App(){ return <Layout><Switch><Route path="/" component={Home}/><Route path="/boutique" component={()=> <Shop/>}/><Route path="/chaussures" component={()=> <Shop category="Chaussures"/>}/><Route path="/ceintures" component={()=> <Shop category="Ceintures"/>}/><Route path="/produit/:slug">{params=><ProductPage slug={params.slug}/>}</Route><Route path="/guide-tailles" component={Sizes}/><Route path="/a-propos" component={About}/><Route path="/contact" component={Contact}/><Route><div className="not-found container"><h1>Cette page n’existe pas.</h1><ButtonLink href="/">Retour à l’accueil</ButtonLink></div></Route></Switch></Layout> }
 export default App;
